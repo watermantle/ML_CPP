@@ -1,2 +1,2 @@
-# ML-with-C-
+# ML_CPP
 recode ML algorithms in C++
