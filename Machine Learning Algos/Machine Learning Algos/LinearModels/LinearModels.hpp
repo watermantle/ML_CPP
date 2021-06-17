@@ -1,37 +1,34 @@
 /*
 Header files to implement linear models
-X: mat type with shape (N, M), a dataset consisting of 'N' examples each of dimension of 'M'
-y: mat type with shape (N, K), the targets for each of the 'N' examples in 'X', where each target has dimension `K` 
+X: mat type with shape (M, N), a dataset consisting of 'M' examples each of dimension of 'N'
+y: mat type with shape (M, K), the targets for each of the 'M' examples in 'X', where each target has dimension `K` 
 
 1. Linear Regression
 To apply Ordinary Least Squares with normal equation with formula:
-\hat{\beta} = \left(\mathbf{X}^\top \mathbf{X}\right)^{-1} \mathbf{X}^\top \mathbf{y}
+\mathbf{theta}= \left(\mathbf{X}^\top \mathbf{X}\right)^{-1} \mathbf{X}^\top \mathbf{y}
 
 2. Ridge Regression
 To apply Ridge regression with normal equation:
- \hat{\beta} \left(\mathbf{X}^\top \mathbf{X} +
- \alpha \mathbf{I} \right)^{-1}\mathbf{X}^\top \mathbf{y}
+ \mathbf{theta} \left(\mathbf{X}^\top \mathbf{X} +
+ \lambda \mathbf{I} \right)^{-1}\mathbf{X}^\top \mathbf{y}
  
 where alpha is the paramater for L2 regulization, a greater value has a larger penalty
 
 3. Logistic Regression
 To minimize the following loss function:
 
-- \log \mathcal{L}(\mathbf{b}, \mathbf{y}) = -\frac{1}{N} \left[
+- \log (\mathcal{L}(\mathbf{theta})) = -\frac{1}{M} \left[
         \left(
-            \sum_{i=0}^N y_i \log(\hat{y}_i) +
-                (1-y_i) \log(1-\hat{y}_i)
-        \right) - R(\mathbf{b}, \gamma)
+            \sum_{i=0}^M \y^((i)) \log(\h_theta(x^((i)))) +
+                (1-y^((i))) \log(1-\h_theta(x^((i))))
+        \right) - R(\mathbf{theta}, \lambda)
     \right]
 
 Where:
-R(\mathbf{b}, \gamma) = \left\{
-                \begin{array}{lr}
-                    \frac{\gamma}{2} ||\mathbf{beta}||_2^2 & :\texttt{ penalty = 'l2'}\\
-                    \gamma ||\beta||_1 & :\texttt{ penalty = 'l1'}
-                \end{array}
-                \right
-is a regularization penalty, '\gamma' is a regularization weight, 'N' is the number of examples in y
+R(mathbf{theta}, lambda) = {(lambda/2||\mathbf{theta}||_2^2\ :\ "penalty" = 'l2'),
+(lambda||\mathbf{theta}||_1:\ "penalty" = 'l1'):}
+
+is a regularization penalty, '\lambda' is a regularization weight, 'M' is the number of examples in y
 fit with gradient descent algo
 
 */
@@ -51,7 +48,7 @@ private:
     
 public:
     //  a vector to store coefficents of the results with defult shape of 100 X 1
-    vec beta; 
+    vec theta; 
 
     //  constructors
     LinearRegression();
@@ -63,7 +60,7 @@ public:
     LinearRegression& operator = (const LinearRegression& source);
 
     //  functions
-    const void fit(mat X, const mat& y);   // fit function to calculate the results and store to beta
+    const void fit(mat X, const mat& y);   // fit function to calculate the results and store to theta
     const mat predict(mat X);   // return predicted values with trained model
 };
 
@@ -73,15 +70,15 @@ private:
     //  Whether to fit intercept, with default value true
     bool fit_intercept;
     //  Regulation paramater 
-    double alpha;
+    double lambda;
 
 public:
     //  a vector to store coefficents of the results with defult shape of 100 X 1
-    vec beta;
+    vec theta;
 
     //  constructors
     RidgeRegression();
-    RidgeRegression(double alpha1, bool fit_intercept1=true);
+    RidgeRegression(double lambda1, bool fit_intercept1=true);
     RidgeRegression(const RidgeRegression& source);
     ~RidgeRegression();
 
@@ -89,7 +86,7 @@ public:
     RidgeRegression& operator = (const RidgeRegression& source);
 
     //  functions
-    const void fit(mat X, const mat& y);    // fit function to calculate the results and store to beta
+    const void fit(mat X, const mat& y);    // fit function to calculate the results and store to theta
     const mat predict(mat X);   // return predicted values with trained model
 };
 
@@ -98,7 +95,7 @@ public:
 class LogisticRegression {
 private:
     //  regularization paramater
-    double gamma;
+    double lambda;
     //  regularization type with l2 as default/
     string penalty;
     //  Whether to fit intercept, with default value true
@@ -106,10 +103,10 @@ private:
 
 public:
     //  a vector to store coefficents of the results with defult shape of 100 X 1
-    vec beta;
+    vec theta;
     //  constructors
     LogisticRegression();
-    LogisticRegression(double gamma1 = 0, bool fit_intercept1 = true, string penalty = "l2");
+    LogisticRegression(double lambda1 = 0, bool fit_intercept1 = true, string penalty = "l2");
     LogisticRegression(const LogisticRegression& source);
     ~LogisticRegression();
 
@@ -117,11 +114,11 @@ public:
     LogisticRegression& operator = (const LogisticRegression& source);
 
     //  functions
-    // fit function to calculate the results and store to beta. Apply gradient descent algo to minimize loss function
+    // fit function to calculate the results and store to theta. Apply gradient descent algo to minimize loss function
     const void fit(mat X, const mat& y, double lr = 0.01, double tol = 1e-7, long max_iter = 1e7);
     const mat predict(mat X);   // return predicted values with trained model
     double _NLL(const mat& X, const mat& y, const mat& y_pred); // supplemental function to calculate negative log likelihood under current model
-    vec _NLL_grad(const mat& X, const mat& y, const mat& y_pred); // supplemental function to calculate Gradient of the penalized negative log likelihood wrt beta
+    vec _NLL_grad(const mat& X, const mat& y, const mat& y_pred); // supplemental function to calculate Gradient of the penalized negative log likelihood wrt theta
 };
 
 //  supplemental functions
