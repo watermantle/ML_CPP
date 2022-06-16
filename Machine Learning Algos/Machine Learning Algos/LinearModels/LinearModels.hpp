@@ -126,4 +126,3 @@ public:
 //The logistic sigmoid function
 mat sigmoid(const mat& X);
 #endif;
-
