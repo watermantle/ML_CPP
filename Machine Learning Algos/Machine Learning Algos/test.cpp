@@ -9,19 +9,29 @@
 using namespace std;
 using namespace arma;
 
+
 int main() {
-    tuple<mat, vec> data = make_regression(10, 1, 100);
-    mat X = get<0>(data);
-    vec y = get<1>(data);
-
-    LinearRegression reg = LinearRegression();
-    reg.fit(X, y);
-    vec y_pred = reg.predict(X);
+    // test regression functions
     
-    double cost = sum(pow((y - y_pred), 2));
-    cout << "the cost is " << cost << endl;
-    cout << "the coeff are" << reg.theta << endl;
+   /* tuple<mat, vec> data = make_classification(1000, 6, 2);
+    mat X = get<0>(data);
+    vec y = get<1>(data);*/
+    
+    
 
+    tuple<mat, vec> iris = dataloader("iris");
+    mat X = get<0>(iris);
+    vec y = get<1>(iris);
+    
+    uvec idx = find(y < 2);
+    mat X_train = X.rows(idx);
+    vec y_train = y.rows(idx);
+
+    LogisticRegression log_reg = LogisticRegression(true);
+    log_reg.fit(X_train, y_train);
+
+    vec y_pred = log_reg.predict(X_train);
+    cout << sum(abs(y_pred - y_train)) << endl;
     return 0;
 }
 

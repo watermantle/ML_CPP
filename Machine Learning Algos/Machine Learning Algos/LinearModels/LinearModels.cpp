@@ -80,7 +80,7 @@ const void RidgeRegression::fit(mat X, const mat& y) {
 
 	mat A = lambda * eye(X.n_cols, X.n_cols);
 	//	ipseduo inverse part of the equation
-	mat ipseudo_inverse = (X.t() * X + A).i() * X.t();
+	mat ipseudo_inverse = inv(X.t() * X + A) * X.t();
 
 	theta = ipseudo_inverse * y;		//	save results
 	return;
