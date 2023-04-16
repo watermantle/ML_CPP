@@ -33,9 +33,9 @@ fit with gradient descent algo
 
 */
 #include <iostream>
-#include <armadillo>
+#include <Eigen/Dense>
 using namespace std;
-using namespace arma;
+using namespace Eigen;
 
 
 #ifndef LinearModels_HPP
@@ -48,7 +48,7 @@ private:
     
 public:
     //  a vector to store coefficents of the results with defult shape of 100 X 1
-    vec theta; 
+    Eigen::VectorXd theta;
 
     //  constructors
     LinearRegression();
@@ -60,8 +60,8 @@ public:
     LinearRegression& operator = (const LinearRegression& source);
 
     //  functions
-    const void fit(mat X, const mat& y);   // fit function to calculate the results and store to theta
-    const mat predict(mat X);   // return predicted values with trained model
+    void fit(const Eigen::MatrixXd& X, const Eigen::MatrixXd& y);   // fit function to calculate the results and store to theta
+    Eigen::MatrixXd predict(const Eigen::MatrixXd& X);   // return predicted values with trained model
 };
 
 
@@ -74,7 +74,7 @@ private:
 
 public:
     //  a vector to store coefficents of the results with defult shape of 100 X 1
-    vec theta;
+    Eigen::VectorXd theta;
 
     //  constructors
     RidgeRegression();
@@ -86,8 +86,8 @@ public:
     RidgeRegression& operator = (const RidgeRegression& source);
 
     //  functions
-    const void fit(mat X, const mat& y);    // fit function to calculate the results and store to theta
-    const mat predict(mat X);   // return predicted values with trained model
+    void fit(const Eigen::MatrixXd& X, const Eigen::MatrixXd& y);    // fit function to calculate the results and store to theta
+    const Eigen::MatrixXd predict(Eigen::MatrixXd& X);   // return predicted values with trained model
 };
 
 
@@ -100,10 +100,12 @@ private:
     string penalty;
     //  Whether to fit intercept, with default value true
     bool fit_intercept;
+    double _NLL(const Eigen::MatrixXd& X, const Eigen::MatrixXd& y, const Eigen::MatrixXd& y_pred); // supplemental function to calculate negative log likelihood under current model
+    Eigen::VectorXd _NLL_grad(const Eigen::MatrixXd& X, const Eigen::MatrixXd& y, const Eigen::MatrixXd& y_pred); // supplemental function to calculate Gradient of the penalized negative log likelihood wrt theta
 
 public:
     //  a vector to store coefficents of the results with defult shape of 100 X 1
-    vec theta;
+    Eigen::VectorXd theta;
     //  constructors
     LogisticRegression();
     LogisticRegression(double lambda1 = 0, bool fit_intercept1 = true, string penalty = "l2");
@@ -115,14 +117,12 @@ public:
 
     //  functions
     // fit function to calculate the results and store to theta. Apply gradient descent algo to minimize loss function
-    const void fit(mat X, const mat& y, double lr = 0.01, double tol = 1e-7, long max_iter = 1e7);
-    const mat predict(mat X);   // return predicted values with trained model
-    double _NLL(const mat& X, const mat& y, const mat& y_pred); // supplemental function to calculate negative log likelihood under current model
-    vec _NLL_grad(const mat& X, const mat& y, const mat& y_pred); // supplemental function to calculate Gradient of the penalized negative log likelihood wrt theta
+    void fit(const Eigen::MatrixXd& X, const Eigen::MatrixXd& y, double lr = 0.01, double tol = 1e-7, long max_iter = 1e7);
+    const Eigen::MatrixXd predict(const Eigen::MatrixXd& X);   // return predicted values with trained model   
 };
 
 //  supplemental functions
 
 //The logistic sigmoid function
-mat sigmoid(const mat& X);
+Eigen::MatrixXd sigmoid(const Eigen::MatrixXd& X);
 #endif;

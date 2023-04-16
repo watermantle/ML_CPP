@@ -5,36 +5,41 @@ purposes.
 
 */
 
+#include <fstream>
 #include <iostream>
-#include <tuple>
-#include <armadillo>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include <utility>
+#include <Eigen/Dense>
 
 
 using namespace std;
-using namespace arma;
+using namespace Eigen;
 
 
-tuple<mat, vec> make_regression(
-	int n_samples = 100,
-	int n_features = 100,
-	double bias = 0.0,
-	double noise = 0.0,
-	int random_state = INT_MAX
+pair<Eigen::MatrixXd, Eigen::VectorXd> make_regression(
+	const int n_samples = 100,
+	const int n_features = 100,
+	const double bias = 0.0,
+	const double noise = 0.0,
+	const int random_state = INT_MAX
 ) {
 	// sampling from a stanadard normal dist
-	if (random_state != INT_MAX) arma_rng::set_seed(random_state);
-	mat x(n_samples, n_features, fill::randn);
+	if (random_state != INT_MAX) srand(random_state);
+	Eigen::MatrixXd x = Eigen::MatrixXd::Random(n_samples, n_features);
 	// generate a random y
-	vec *ground_truth = new vec(n_features, fill::randu);
-	vec y = x * (*ground_truth) * 100 + bias;
-	delete ground_truth;
-	if (noise > 0.0) y += vec(n_samples, fill::randn) * noise;
-	return tuple<mat, vec>(x, y);
+	Eigen::VectorXd ground_truth = Eigen::VectorXd::Random(n_features);
+	Eigen::VectorXd y = 100 * x * ground_truth + Eigen::VectorXd::Constant(n_samples, bias);
+
+	if (noise > 0.0) y += Eigen::VectorXd::Random(n_samples) * noise;
+	return make_pair(x, y);
 }
 
 
 // make classification problem
-tuple<mat, vec> make_classification(
+pair<Eigen::MatrixXd, Eigen::VectorXd> make_classification(
 	int n_samples = 100,
 	int n_features = 2,
 	int n_classes = 2,
@@ -42,16 +47,16 @@ tuple<mat, vec> make_classification(
 	int random_state = INT_MAX
 ) {
 	// sampling from a stanadard normal dist and init y
-	if (random_state != INT_MAX) arma_rng::set_seed(random_state);
-	mat x(n_samples, n_features, fill::randn);
-	vec y(n_samples, fill::zeros);
+	if (random_state != INT_MAX) srand(random_state);
+	Eigen::MatrixXd x = Eigen::MatrixXd::Random(n_samples, n_features);
+	Eigen::VectorXd y = Eigen::VectorXd::Zero(n_samples);
 
 	// get number of samples for each class
-	uvec n_samples_perk(n_classes);
-	n_samples_perk.fill(u64(n_samples / n_classes));
+	VectorXi n_samples_perk(n_classes);
+	n_samples_perk.fill(n_samples / n_classes);
 	
-	for (int i = 0; i < n_samples - sum(n_samples_perk); ++i) {
-		n_samples_perk(i) += 1;
+	for (int i = 0; i < n_samples - n_samples_perk.array().sum(); ++i) {
+		n_samples_perk(i)++;
 	}
 
 	// put y values
@@ -59,19 +64,54 @@ tuple<mat, vec> make_classification(
 	for (int i = 0; i < n_classes; ++i) {
 		start = stop;
 		stop += int(n_samples_perk(i));
-		y.subvec(start, stop -1).fill(i);
+		y.segment(start, stop - start).setConstant(i);
 	}
-	return tuple<mat, vec>(x, y);
+	return make_pair(x, y);
 }
 
 // dataloader
-tuple<mat, vec> dataloader(string filename) {
+pair<Eigen::MatrixXd, Eigen::VectorXd> dataloader(string filename) {
+	// Construct the file path
 	string file = "datasets/load_data/" + filename + ".csv";
-	mat data;
-	data.load(file);
 
-	mat X = data.cols(0, data.n_cols - 2);
-	vec y = data.col(data.n_cols - 1);
+	// Open the file
+	ifstream data_file(file);
+	if (!data_file.is_open()) {
+		throw std::runtime_error("Cannot open file: " + file);
+	}
 
-	return tuple<mat, vec>(X, y);
+	// Read the data from the file
+	vector<double> data_buffer;
+	string line;
+	int rows = 0;
+	int cols = 0;
+
+	// Read each line and split by comma
+	while (getline(data_file, line)) {
+		stringstream line_stream(line);
+		string cell;
+		cols = 0;
+
+		// Read each cell separated by a comma
+		while (getline(line_stream, cell, ',')) {
+			data_buffer.push_back(stod(cell));
+			cols++;
+		}
+		rows++;
+	}
+
+	// Create the Eigen::MatrixXd object from the read data
+	Eigen::MatrixXd data(rows, cols);
+	for (int i = 0; i < rows; ++i) {
+		for (int j = 0; j < cols; ++j) {
+			data(i, j) = data_buffer[i * cols + j];
+		}
+	}
+
+	// Separate the last column as the target vector
+	Eigen::MatrixXd X = data.leftCols(data.cols() - 1);
+	Eigen::VectorXd y = data.col(data.cols() - 1);
+
+	// Return the pair of Eigen::MatrixXd and Eigen::VectorXd objects
+	return make_pair(X, y);
 }
